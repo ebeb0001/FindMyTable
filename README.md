@@ -1,11 +1,11 @@
 # FindMyTable
 
-FindMyTable is a mobile-first web app that lets a guest quickly find their
-assigned table, group, or related event information by searching their name.
+FindMyTable is a mobile-first static web app that lets a guest quickly find
+their assigned table, group, or related event information by searching their
+name.
 
-The project runs entirely in the browser: no framework, no backend, and no
-required installation. All users read the same guest list from
-`data/guests.csv`.
+The app runs entirely in the browser. It uses HTML, CSS, and vanilla JavaScript:
+no framework, no backend, and no build step.
 
 ## Structure
 
@@ -25,20 +25,26 @@ required installation. All users read the same guest list from
     `-- guests.csv
 ```
 
-## Run The App
+`index.html` is at the repository root so GitHub Pages can serve it directly.
+All application paths are relative, for example:
 
-The app loads `data/guests.csv` with `fetch()`, so it must be served over HTTP,
-even locally.
-
-```bash
-python -m http.server 4173
+```html
+<link rel="stylesheet" href="./assets/css/style.css">
+<script type="module" src="./assets/js/app.js"></script>
 ```
 
-Then open `http://127.0.0.1:4173/`.
+The guest list is loaded with:
 
-## `data/guests.csv` Format
+```js
+fetch("./data/guests.csv")
+```
 
-The file must contain the `nom_affiche` and `groupe` columns.
+This keeps the app compatible with GitHub Pages project URLs such as
+`https://username.github.io/repository-name/`.
+
+## Guest CSV Format
+
+The file `data/guests.csv` must contain the `nom_affiche` and `groupe` columns.
 
 ```csv
 nom_affiche,groupe
@@ -61,24 +67,42 @@ but the current interface displays only the name and group.
 
 Edit `data/guests.csv` directly in the repository.
 
-Each redeployment publishes the updated list. On GitHub Pages, all phones and
-computers automatically load the same published CSV file, with no manual import
-and no browser-stored guest data.
+After each redeployment, every visitor loads the same published CSV file from
+GitHub Pages. No manual import and no browser-stored guest data are required.
 
-## Behavior
+## Test Locally
 
-When the page loads, the app fetches `data/guests.csv`, parses it, and keeps the
-data in memory for the current session.
+You can open `index.html` directly in a browser to inspect the page shell.
 
-Search ignores case, accents, and extra spaces. Suggestions appear after two
-characters and are limited to five results.
+For a full functional test, including loading `data/guests.csv` with `fetch()`,
+serve the project over HTTP:
 
-## GitHub Pages Deployment
+```bash
+python -m http.server 4173
+```
 
-1. Push the repository to GitHub.
-2. Open `Settings`, then `Pages`.
-3. Select the branch to publish, for example `main`.
-4. Select the root folder `/`.
-5. Save the configuration.
+Then open:
 
-GitHub Pages will serve `index.html` directly.
+```text
+http://127.0.0.1:4173/
+```
+
+Some browsers block `fetch()` from local `file://` pages, so the local server is
+the recommended test method.
+
+## Déploiement GitHub Pages
+
+1. Push the project to GitHub.
+2. Open the repository settings.
+3. Open **Pages**.
+4. Choose the `main` branch.
+5. Choose `/ (root)`, the repository root folder.
+6. Save.
+7. Wait for GitHub to generate the GitHub Pages URL.
+
+The app is ready to run from the generated public URL, including project
+sub-paths such as:
+
+```text
+https://username.github.io/repository-name/
+```

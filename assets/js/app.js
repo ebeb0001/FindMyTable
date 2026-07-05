@@ -11,7 +11,7 @@ import {
   showResult,
 } from "./ui.js";
 
-const GUESTS_CSV_URL = "data/guests.csv";
+const GUESTS_CSV_URL = "./data/guests.csv";
 
 const ui = getUi();
 
