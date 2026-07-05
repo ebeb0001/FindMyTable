@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FindMyTable</title>
+    <meta
+      name="description"
+      content="Mobile-first app to quickly find a guest's assigned table or group."
+    >
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script type="module" src="assets/js/app.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="hero" aria-labelledby="app-title">
+        <div>
+          <p class="eyebrow">Event Finder</p>
+          <h1 id="app-title">FindMyTable</h1>
+          <p class="intro">
+            Search for a name to quickly display the group, table, or related
+            information for a guest. The guest list is loaded automatically from
+            the published event data.
+          </p>
+        </div>
+      </section>
+
+      <section class="search-panel" aria-labelledby="search-title">
+        <div class="section-heading">
+          <h2 id="search-title">Guest Search</h2>
+          <p id="dataset-status">Loading the guest list...</p>
+        </div>
+
+        <form id="search-form" class="search-form" autocomplete="off" novalidate>
+          <label for="guest-search">Guest name</label>
+          <div class="search-box">
+            <input
+              id="guest-search"
+              name="guest-search"
+              type="search"
+              role="combobox"
+              placeholder="e.g. Alice Dupont"
+              aria-describedby="search-help"
+              aria-autocomplete="list"
+              aria-controls="suggestions"
+              aria-expanded="false"
+              aria-haspopup="listbox"
+            >
+          </div>
+          <p id="search-help" class="hint">Enter at least 2 characters.</p>
+        </form>
+
+        <ul
+          id="suggestions"
+          class="suggestions"
+          role="listbox"
+          aria-label="Name suggestions"
+          hidden
+        ></ul>
+
+        <div id="message" class="message" role="status" aria-live="polite"></div>
+
+        <article id="result-card" class="result-card" aria-live="polite" hidden>
+          <h3 id="result-name"></h3>
+          <p class="result-label">You are at</p>
+          <p id="result-group" class="result-group"></p>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
