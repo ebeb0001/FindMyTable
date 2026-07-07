@@ -1,6 +1,13 @@
 import { parseGuestCsv } from "./csv.js";
+import {
+  getInitialLanguage,
+  isSupportedLanguage,
+  setStoredLanguage,
+  translate,
+} from "./i18n.js";
 import { createSearchIndex, findSuggestions, normalizeText } from "./search.js";
 import {
+  applyTranslations,
   clearMessage,
   getUi,
   hideResult,
@@ -16,8 +23,10 @@ const GUESTS_CSV_URL = "./data/guests.csv";
 const ui = getUi();
 
 const state = {
+  language: getInitialLanguage(),
   isLoading: true,
-  loadError: "",
+  loadErrorDetail: "",
+  message: null,
   guests: [],
   suggestions: [],
   activeSuggestionIndex: -1,
@@ -26,11 +35,15 @@ const state = {
 init();
 
 function init() {
+  applyCurrentLanguage();
   bindEvents();
   loadGuestsFromCsv();
 }
 
 function bindEvents() {
+  ui.languageButtons.forEach((button) => {
+    button.addEventListener("click", handleLanguageChange);
+  });
   ui.searchInput.addEventListener("input", handleSearchInput);
   ui.searchInput.addEventListener("keydown", handleSearchKeydown);
   ui.searchForm.addEventListener("submit", handleSearchSubmit);
@@ -39,8 +52,8 @@ function bindEvents() {
 
 async function loadGuestsFromCsv() {
   state.isLoading = true;
-  state.loadError = "";
-  setDatasetStatus("Loading the guest list...");
+  state.loadErrorDetail = "";
+  updateDatasetStatus();
 
   try {
     const response = await fetch(GUESTS_CSV_URL, { cache: "no-store" });
@@ -57,17 +70,35 @@ async function loadGuestsFromCsv() {
     }
 
     state.guests = createSearchIndex(parsed.guests);
-    setDatasetStatus(state.guests.length);
-    clearMessage(ui.message);
+    updateDatasetStatus();
+    clearLocalizedMessage();
   } catch (error) {
     state.guests = [];
-    state.loadError = `Unable to load the guest list: ${error.message}`;
-    setDatasetStatus("Guest list unavailable.");
-    setMessage(state.loadError, "error");
+    state.loadErrorDetail = error.message;
+    updateDatasetStatus();
+    setLocalizedMessage("message.loadFailed", "error", {
+      detail: state.loadErrorDetail,
+    });
   } finally {
     state.isLoading = false;
+    updateDatasetStatus();
     updateSearchState();
   }
+}
+
+function handleLanguageChange(event) {
+  const language = event.currentTarget.dataset.language;
+
+  if (!isSupportedLanguage(language) || language === state.language) {
+    return;
+  }
+
+  state.language = language;
+  setStoredLanguage(language);
+  applyCurrentLanguage();
+  updateDatasetStatus();
+  renderStoredMessage();
+  renderCurrentSuggestions();
 }
 
 function handleSearchInput() {
@@ -81,25 +112,27 @@ function handleSearchSubmit(event) {
   const normalizedQuery = normalizeText(query);
 
   if (!normalizedQuery) {
-    setMessage("Enter a name before searching.", "error");
+    setLocalizedMessage("message.enterName", "error");
     hideResult(ui.resultCard);
     return;
   }
 
   if (state.isLoading) {
-    setMessage("The guest list is still loading.", "error");
+    setLocalizedMessage("message.stillLoading", "error");
     hideResult(ui.resultCard);
     return;
   }
 
-  if (state.loadError) {
-    setMessage(state.loadError, "error");
+  if (state.loadErrorDetail) {
+    setLocalizedMessage("message.loadFailed", "error", {
+      detail: state.loadErrorDetail,
+    });
     hideResult(ui.resultCard);
     return;
   }
 
   if (!hasGuests()) {
-    setMessage("No guest data is available.", "error");
+    setLocalizedMessage("message.noGuestData", "error");
     hideResult(ui.resultCard);
     return;
   }
@@ -114,11 +147,11 @@ function handleSearchSubmit(event) {
   }
 
   if (state.suggestions.length > 0) {
-    setMessage("Select a suggestion to display the result.", "error");
+    setLocalizedMessage("message.selectSuggestion", "error");
     return;
   }
 
-  setMessage("No result for this name.", "error");
+  setLocalizedMessage("message.noResult", "error");
   hideResult(ui.resultCard);
 }
 
@@ -167,36 +200,38 @@ function updateSearchState() {
   if (state.isLoading) {
     clearSuggestions();
     if (normalizedQuery) {
-      setMessage("The guest list is still loading.", "error");
+      setLocalizedMessage("message.stillLoading", "error");
     }
     return;
   }
 
-  if (state.loadError) {
+  if (state.loadErrorDetail) {
     clearSuggestions();
-    setMessage(state.loadError, "error");
+    setLocalizedMessage("message.loadFailed", "error", {
+      detail: state.loadErrorDetail,
+    });
     return;
   }
 
   if (!hasGuests()) {
     clearSuggestions();
     if (normalizedQuery) {
-      setMessage("No guest data is available.", "error");
+      setLocalizedMessage("message.noGuestData", "error");
     } else {
-      clearMessage(ui.message);
+      clearLocalizedMessage();
     }
     return;
   }
 
   if (!normalizedQuery) {
     clearSuggestions();
-    clearMessage(ui.message);
+    clearLocalizedMessage();
     return;
   }
 
   if (normalizedQuery.length < 2) {
     clearSuggestions();
-    setMessage("Enter at least 2 characters.", "error");
+    setLocalizedMessage("message.minChars", "error");
     return;
   }
 
@@ -205,11 +240,11 @@ function updateSearchState() {
   renderCurrentSuggestions();
 
   if (state.suggestions.length === 0) {
-    setMessage("No result for this name.", "error");
+    setLocalizedMessage("message.noResult", "error");
     return;
   }
 
-  clearMessage(ui.message);
+  clearLocalizedMessage();
 }
 
 function moveActiveSuggestion(direction) {
@@ -240,7 +275,7 @@ function selectActiveSuggestion() {
 function selectGuest(guest) {
   ui.searchInput.value = guest.displayName;
   clearSuggestions();
-  clearMessage(ui.message);
+  clearLocalizedMessage();
   showResult(ui.resultCard, guest);
 }
 
@@ -265,4 +300,60 @@ function clearSuggestions() {
 
 function hasGuests() {
   return state.guests.length > 0;
+}
+
+function applyCurrentLanguage() {
+  applyTranslations(ui, state.language, t);
+}
+
+function updateDatasetStatus() {
+  if (state.isLoading) {
+    setDatasetStatus(ui.datasetStatus, t("status.loading"));
+    return;
+  }
+
+  if (state.loadErrorDetail) {
+    setDatasetStatus(ui.datasetStatus, t("status.unavailable"));
+    return;
+  }
+
+  if (state.guests.length === 0) {
+    setDatasetStatus(ui.datasetStatus, t("status.empty"));
+    return;
+  }
+
+  const loadedStatusKey =
+    state.guests.length === 1 ? "status.loadedOne" : "status.loadedMany";
+
+  setDatasetStatus(
+    ui.datasetStatus,
+    t(loadedStatusKey, { count: state.guests.length }),
+  );
+}
+
+function setLocalizedMessage(key, type = "neutral", values = {}) {
+  state.message = { key, type, values };
+  setMessage(ui.message, t(key, values), type);
+}
+
+function renderStoredMessage() {
+  if (!state.message) {
+    clearMessage(ui.message);
+    return;
+  }
+
+  setMessage(
+    ui.message,
+    t(state.message.key, state.message.values),
+    state.message.type,
+  );
+}
+
+function clearLocalizedMessage() {
+  state.message = null;
+  clearMessage(ui.message);
+}
+
+function t(key, values) {
+  return translate(state.language, key, values);
 }
