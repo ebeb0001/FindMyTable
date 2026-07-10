@@ -7,7 +7,7 @@ const TRANSLATIONS = {
       "Application mobile pour retrouver rapidement la table ou le groupe attribué à un invité.",
     "hero.eyebrow": "Plan de table",
     "hero.intro":
-      "Recherchez un nom pour afficher rapidement le groupe, la table ou l'information associée à un invité. La liste des invités est chargée automatiquement depuis les données publiées de l'événement.",
+      "Recherchez un nom pour afficher rapidement le groupe, la table ou l'information associée à un invité.",
     "search.title": "Recherche d'invité",
     "search.label": "Nom de l'invité",
     "search.placeholder": "ex. Alice Dupont",
@@ -37,7 +37,7 @@ const TRANSLATIONS = {
       "Mobile-first app to quickly find a guest's assigned table or group.",
     "hero.eyebrow": "Event Finder",
     "hero.intro":
-      "Search for a name to quickly display the group, table, or related information for a guest. The guest list is loaded automatically from the published event data.",
+      "Search for a name to quickly display the group, table, or related information for a guest.",
     "search.title": "Guest Search",
     "search.label": "Guest name",
     "search.placeholder": "e.g. Alice Dupont",
